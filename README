@@ -1,0 +1,96 @@
+		Goscher: A Scheme Gopher Server
+		===============================
+		Author: Aaron W. Hsu
+
+		"Yeah, but is it Goscher?" - Peter Danenberg
+
+		Copyright (c) 2008
+		Licensed under the ISC License.
+
+OVERVIEW
+--------
+
+Goscher is a lean Scheme Gopher server currently designed to be run 
+under inetd. It only supports basic functionality at the moment, but 
+hopefully that will change.
+
+FEATURES
+--------
+
+Currently Gopher only supports the display of files in a set hierarchy 
+with custom descriptions and user-specified extension to file-type 
+mappings.
+
+INSTALLATION
+------------
+
+See the INSTALL file.
+
+RUNNING
+-------
+
+You should add an entry into your inetd.conf file, and remember to pass 
+-q as one of the arguments to the goscher server.
+
+A sample inetd.conf entry might be:
+
+127.0.0.1:gopher	stream	tcp	nowait	root	/usr/local/bin/goscher goscher -q
+
+Notice the -q, this is an important option that must be passed for 
+goscher to work correctly. If you are using goscher-launch to run from 
+the source instead of a compiled release, you do not need to pass the -q 
+option, but you will need to edit the goscher-launch file to suit 
+your installation. You'll also need to modify the inetd entry 
+appropriately.
+
+CONFIGURATION
+-------------
+
+First make sure that /etc/goscher/goscher.conf matches the example, 
+and that the host name is correct.
+
+Goscher currently expects to find its data directory in /var/goscher 
+and its configuration in /etc/goscher. This will become configurable in 
+the future. Right now the only supported goscher configuration files 
+are extensions.X files which specify the extensions that map to file 
+types. Each extensions file maps a list of extensions to the file type 
+'X' which is the last part of the file name, and should be only one 
+letter or digit. The extensions are listed one extension per line.
+
+In every directory of the data directory, there can be a +INDEX file, 
+which specifies the properties associated with every file in that 
+directory. It is formatted as a Scheme S-Expression Association list.
+
+	(("filename" (property . value) ...) 
+         ...)
+
+The currently supported properties are:
+
+	name 		Description of file displayed on the entry.
+	type		Type of the file in Gopher Terms.
+
+SPECIAL FILES
+-------------
+
+Other than +INDEX, there are also special files that you can create 
+which allow you to do things in Goscher.
+
+GOPHER LINKS (file@): 
+
+	These files contain pair based association lists in Scheme 
+	format which allows you to access foreigh gopher servers. 
+	They are expected to have at least five attribute:
+
+		name		Printed Name of the entry
+		selector	The path on the remote server
+		server		Remote host name
+		port		Remote port name
+		type		Document type in gopher form
+
+	A sample entry would be:
+
+		((name . "Floodgap Server")
+ 		 (server . "gopher.floodgap.com")
+ 		 (port . 70)
+ 		 (selector . "")
+ 		 (type . 1))

@@ -1,0 +1,5 @@
+((name . "Floodgap Server")
+ (server . "gopher.floodgap.com")
+ (port . 70)
+ (selector . "")
+ (type . 1))

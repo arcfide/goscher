@@ -1,0 +1,6 @@
+001 HIGH Hidden Files (fixed GOSCHER_0_2)
+
+	Hidden files are considered as files with extensions, and no 
+	filename. This means that they will likely not be considered 
+	part of the extension system, and will be marked as binary 
+	files, when in fact, they are more likely to be text documents.

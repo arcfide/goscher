@@ -1,0 +1,2 @@
+(("something" (name . "Something Cool"))
+ ("test.sh" (name . "Test Script") (type . 0)))

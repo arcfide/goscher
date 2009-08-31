@@ -1,0 +1,11 @@
+MACHINE=ta6li
+INSTALLBIN=/usr/bin
+INSTALLLIB=/usr/lib/csv7.9.3/${MACHINE}/
+
+install: goscher.boot
+	cp goscher.boot ${INSTALLLIB}
+	ln -sf ${INSTALLBIN}/petite ${INSTALLBIN}/goscher
+
+uninstall:
+	rm -rf ${INSTALLBIN}/goscher
+	rm -rf ${INSTALLLIB}/goscher.boot

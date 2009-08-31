@@ -1,0 +1,20 @@
+To install Goscher, you simply need to edit the Makefile with your 
+preferred PREFIX and then run "make install" with the appropriate 
+permissions. Make sure you install Petite Chez Scheme first.
+
+Goscher currently expects to be installed in the same PREFIX as 
+Petite Chez Scheme.
+
+You can download the latest version of Petite Chez Scheme from
+
+	<http://www.scheme.com/download/>
+
+INSTALLING A SOURCE VERSION
+
+If you are not compiling Goscher from source, or if you are just 
+running from source and can't compile from source or use a 
+compiled release, you'll need to install the source files and 
+libraries in an appropriate location, and adjust goscher-launch 
+to point to this location. You can then run Goscher from the 
+source without compiling so long as you install Petite Chez Scheme 
+as per the above.
