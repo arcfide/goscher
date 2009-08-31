@@ -41,7 +41,7 @@
   (generate-inspector-information #f)
   (optimize-level 3))
 
-(module (run-goscher load-extensions load-settings)
+(module (start-proc)
   (import scheme)
   (include "modules.ss")
   (import srfi-13)
@@ -322,17 +322,30 @@
                                 (lambda (p) (read-line 'os p))))
         (cons elem type)))))
 
-(define load-settings
-  (lambda ()
-    (let ([settings-path (string-append (conf-dir) "goscher.conf")])
-      (unless (file-exists? settings-path)
-        (error 'load-settings "Could not find goscher.conf"))
-      (settings (call-with-input-file settings-path read)))))
+(define (load-settings . maybe-file) 
+	(let (
+			[settings-path 
+				(if (pair? maybe-file) 
+					(car maybe-file)
+					(string-append (conf-dir) "goscher.conf"))])
+		(unless (file-exists? settings-path)
+			(error 'load-settings "Could not find goscher.conf"))
+		(settings (call-with-input-file settings-path read))))
+
+(define (start-proc . fns)
+	(define (grab x p)
+		(let ([res (assq x (settings))])
+			(or res (p))))
+	(if (pair? (command-line-arguments))
+		(load-settings (car (command-line-arguments)))
+		(load-settings))
+	(load-extensions)
+	(parameterize (
+			[conf-dir (grab 'conf-dir conf-dir)]
+			[root-dir (grab 'root-dir root-dir)]
+			[log-file (grab 'log-file log-file)]
+		(run-goscher)))
 
 )
 
-(scheme-start        
-  (lambda fns 
-    (load-settings)
-    (load-extensions)
-    (run-goscher)))
+(scheme-start start-proc)
