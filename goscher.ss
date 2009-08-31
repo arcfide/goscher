@@ -43,7 +43,6 @@
 
 (module (run-goscher load-extensions load-settings)
   (import scheme)
-  (include "conf.ss")
   (include "modules.ss")
   (import srfi-13)
   (import srfi-14)
@@ -55,6 +54,16 @@
   '("+INDEX"))
 
 (define gopher-entry-format "~a~a	~a	~a	~d")
+
+(define conf-dir
+	(make-parameter "/etc/goscher/"
+		(lambda (x) (unless (path? x) (error 'conf-dir "Invalid conf-dir value" x)) x)))
+(define root-dir
+	(make-parameter "/var/goscher/"
+		(lambda (x) (unless (path? x) (error 'root-dir "Invalid root-dir value" x)) x)))
+(define log-file
+	(make-parameter "/var/log/goscher"
+		(lambda (x) (unless (path? x) (error 'log-file "Invalid log-file value" x)) x)))
 
 (define extension-types
   (make-parameter '()
@@ -111,7 +120,7 @@
 
 (define goscher-log
   (lambda data 
-    (with-output-to-file log-file
+    (with-output-to-file (log-file)
       (lambda () 
         (for-each write data)
         (newline))
@@ -125,7 +134,7 @@
         (let ([req (split-request-string s)])
           (cond 
             [(string-null? (car req)) 
-             (values root-dir (gopher+? req))]
+             (values (root-dir) (gopher+? req))]
             [else 
              (values (directory+file #t "" (car req))
                (gopher+? req))]))))))
@@ -160,8 +169,8 @@
 
 (define selector-path
   (lambda (dir)
-    (if (string-prefix? root-dir dir)
-        (substring dir (string-length root-dir) (string-length dir))
+    (if (string-prefix? (root-dir) dir)
+        (substring dir (string-length (root-dir)) (string-length dir))
         dir)))
 
 (define print-directory-entry 
@@ -284,8 +293,8 @@
 (define directory+file
   (lambda (root? dir file)
     (if (string-null? dir) 
-      (string-append (if root? root-dir "") file)
-      (string-append (if root? root-dir "")
+      (string-append (if root? (root-dir) "") file)
+      (string-append (if root? (root-dir) "")
         (if (char=? (directory-separator) 
                     (string-ref dir (1- (string-length dir))))
             dir
@@ -300,7 +309,7 @@
           (append (convert-extension-file e) s))
         '()
         (filter (lambda (e) (string-prefix? "extensions." e))
-          (directory-list conf-dir))))))
+          (directory-list (conf-dir)))))))
 
 (define convert-extension-file
   (lambda (file)
@@ -309,13 +318,13 @@
                     (1+ (string-index-right file #\.))
                     (string-length file))
                   read)])
-      (collect-list (for elem (in-file (directory+file #f conf-dir file)
+      (collect-list (for elem (in-file (directory+file #f (conf-dir) file)
                                 (lambda (p) (read-line 'os p))))
         (cons elem type)))))
 
 (define load-settings
   (lambda ()
-    (let ([settings-path (string-append conf-dir "goscher.conf")])
+    (let ([settings-path (string-append (conf-dir) "goscher.conf")])
       (unless (file-exists? settings-path)
         (error 'load-settings "Could not find goscher.conf"))
       (settings (call-with-input-file settings-path read)))))
