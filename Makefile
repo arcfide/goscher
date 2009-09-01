@@ -48,6 +48,13 @@ package: goscher.boot Makefile README INSTALL LICENSE
 	cp -R conf/goscher.conf goscher-${VERSION}/conf/
 	tar cvzf goscher-${VERSION}.tar.gz goscher-${VERSION}
 
+source-package: 
+	rm -rf goscher-source-${VERSION}
+	mkdir -p goscher-source-${VERSION}
+	cp -R BUGS INSTALL LICENSE Makefile Makefile.install README \
+		TODO *.ss conf goscher-source-${VERSION}
+	tar cvzf goscher-source-${VERSION}.tar.gz goscher-source-${VERSION}
+
 clean: 
 	rm -rf goscher.so goscher.boot goscher.hdr
 	rm -rf goscher-${VERSION}*
