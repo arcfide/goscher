@@ -4,7 +4,7 @@
 
 		"Yeah, but is it Goscher?" - Peter Danenberg
 
-		Copyright (c) 2008
+		Copyright (c) 2009
 		Licensed under the ISC License.
 
 OVERVIEW
@@ -34,14 +34,7 @@ You should add an entry into your inetd.conf file, and remember to pass
 
 A sample inetd.conf entry might be:
 
-127.0.0.1:gopher	stream	tcp	nowait	root	/usr/local/bin/goscher goscher -q
-
-Notice the -q, this is an important option that must be passed for 
-goscher to work correctly. If you are using goscher-launch to run from 
-the source instead of a compiled release, you do not need to pass the -q 
-option, but you will need to edit the goscher-launch file to suit 
-your installation. You'll also need to modify the inetd entry 
-appropriately.
+127.0.0.1:gopher	stream	tcp	nowait	root	/usr/local/bin/goscher goscher
 
 CONFIGURATION
 -------------
@@ -68,6 +61,10 @@ The currently supported properties are:
 
 	name 		Description of file displayed on the entry.
 	type		Type of the file in Gopher Terms.
+
+It is possible to tweak the configuration and location of the files, 
+but if you change the location of goscher.conf, you must pass this 
+file explicitly to the goscher program on launch as the first argument.
 
 SPECIAL FILES
 -------------

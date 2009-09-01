@@ -3,14 +3,30 @@ VERSION=0.3
 INSTALLBIN=/usr/bin
 INSTALLLIB=/usr/lib/csv7.9.3/${MACHINE}/
 
+DEPS=../../srfi/private/include.chezscheme.sls \
+	../../srfi/private/let-opt.sls \
+	../../srfi/9/records.sls \
+	../../srfi/39/parameters.chezscheme.sls \
+	../../srfi/23/error.sls \
+	../../srfi/14/char-sets.sls \
+	../../srfi/14.sls \
+	../../srfi/8/receive.sls \
+	../../srfi/8.sls \
+	../../srfi/13/strings.sls \
+	../../srfi/13.sls \
+	../../arcfide/extended-definitions.sls \
+	../../riastradh/foof-loop/loop.sls \
+	../../riastradh/foof-loop/nested.sls \
+	../../riastradh/foof-loop.sls
+
 goscher.boot: goscher.so goscher.hdr
 	cat goscher.hdr goscher.so > goscher.boot
 
-goscher.hdr: goscher.so
+goscher.hdr: 
 	echo '(make-boot-header "goscher.hdr" "petite.boot")' | scheme -q
 
-goscher.so: goscher.ss modules.ss conf.ss
-	echo '(compile-file "goscher")' | scheme -q
+goscher.so: ${DEPS} goscher.ss
+	./build.ss goscher.so ${DEPS} goscher.ss
 
 install: goscher.boot
 	cp goscher.boot ${INSTALLLIB}
