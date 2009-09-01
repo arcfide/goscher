@@ -333,8 +333,8 @@
 	(define (grab x p)
 		(let ([res (assq x (settings))])
 			(or res (p))))
-	(if (pair? (command-line-arguments))
-		(load-settings (car (command-line-arguments)))
+	(if (pair? (cdr fns))
+		(load-settings (cadr fns))
 		(load-settings))
 	(load-extensions)
 	(parameterize (
