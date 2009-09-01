@@ -42,13 +42,10 @@
   (optimize-level 3))
 
 (module (start-proc)
-  (import scheme)
-  (include "modules.ss")
-  (import srfi-13)
-  (import srfi-14)
-  (import arcfide-misc)
-  (import foof-loop)
-  (import nested-foof-loop)
+	(import (chezscheme)
+		(only (srfi :13) string-tokenize string-null? string-prefix?)
+		(only (srfi :14) char-set char-set-complement)
+		(riastradh foof-loop))
 
 (define special-files
   '("+INDEX"))
@@ -57,13 +54,13 @@
 
 (define conf-dir
 	(make-parameter "/etc/goscher/"
-		(lambda (x) (unless (path? x) (error 'conf-dir "Invalid conf-dir value" x)) x)))
+		(lambda (x) (unless (string? x) (error 'conf-dir "Invalid conf-dir value" x)) x)))
 (define root-dir
 	(make-parameter "/var/goscher/"
-		(lambda (x) (unless (path? x) (error 'root-dir "Invalid root-dir value" x)) x)))
+		(lambda (x) (unless (string? x) (error 'root-dir "Invalid root-dir value" x)) x)))
 (define log-file
 	(make-parameter "/var/log/goscher"
-		(lambda (x) (unless (path? x) (error 'log-file "Invalid log-file value" x)) x)))
+		(lambda (x) (unless (string? x) (error 'log-file "Invalid log-file value" x)) x)))
 
 (define extension-types
   (make-parameter '()
@@ -128,7 +125,7 @@
 
 (define get-request
   (lambda ()
-    (let ([s (read-line 'crlf)])
+    (let ([s (get-line (current-input-port))])
       (if (eof-object? s)
         (values #f #f)
         (let ([req (split-request-string s)])
@@ -319,7 +316,7 @@
                     (string-length file))
                   read)])
       (collect-list (for elem (in-file (directory+file #f (conf-dir) file)
-                                (lambda (p) (read-line 'os p))))
+                                (lambda (p) (get-line p))))
         (cons elem type)))))
 
 (define (load-settings . maybe-file) 
@@ -343,7 +340,7 @@
 	(parameterize (
 			[conf-dir (grab 'conf-dir conf-dir)]
 			[root-dir (grab 'root-dir root-dir)]
-			[log-file (grab 'log-file log-file)]
+			[log-file (grab 'log-file log-file)])
 		(run-goscher)))
 
 )
