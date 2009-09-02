@@ -218,18 +218,11 @@
       (if type (cdr type)
         (if (char=? #\. (string-ref name 0))
           0
-          (let ([ext (file-extension name)])
+          (let ([ext (path-extension name)])
             (if ext 
-                (let ([res (assoc (file-extension name) (extension-types))])
+                (let ([res (assoc (path-extension name) (extension-types))])
                   (if res (cdr res) 9))
                 0)))))))
-
-(define file-extension
-  (lambda (name)
-    (let ([i (string-index-right name #\.)])
-      (if (and i (< (1+ i) (string-length name)))
-        (substring name (1+ i) (string-length name))
-        #f))))
 
 (define entry-user-name
   (lambda (name db)
@@ -258,20 +251,11 @@
 
 (define goscher-file
   (lambda (file)
-    (let ([db (goscher-index (path-directory file))])
-      (case (lookup-filetype (path-filename file) db)
+    (let ([db (goscher-index (path-parent file))])
+      (case (lookup-filetype (path-last file) db)
         [(0 4 6 I g) (goscher-document file)]
         [(5 9) (goscher-stream file)]
         [else (goscher-not-found)]))))
-
-(define path-directory
-  (lambda (path)
-    (substring path 0 (string-index-right path (directory-separator)))))
-
-(define path-filename
-  (lambda (path)
-    (substring path (fx1+ (string-index-right path (directory-separator)))
-      (string-length path))))
 
 (define goscher-document
   (lambda (file)
@@ -306,11 +290,7 @@
 
 (define convert-extension-file
   (lambda (file)
-    (let ([type (with-input-from-string
-                  (substring file 
-                    (1+ (string-index-right file #\.))
-                    (string-length file))
-                  read)])
+    (let ([type (with-input-from-string (path-extension file) read)])
       (collect-list (for elem (in-file (directory+file #f (conf-dir) file)
                                 (lambda (p) (get-line p))))
         (cons elem type)))))
