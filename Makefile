@@ -50,5 +50,5 @@ source-package:
 clean: 
 	rm -rf goscher.so goscher.boot goscher.hdr
 	rm -rf goscher-${VERSION}*
-	rm -rf goscher-deps*
+	rm -rf build
 	rm -rf goscher-source*

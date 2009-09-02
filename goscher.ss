@@ -85,7 +85,7 @@
 (define run-goscher
   (lambda ()
     (let-values ([(path plus?) (get-request)])
-      (when path
+      (when (good-path? path)
         (cond
           [plus? (plus-kludge path)]
           [(file-directory? path) 
@@ -94,6 +94,24 @@
            (goscher-file path)]
           [else 
             (goscher-not-found)])))))
+
+(define (good-path? path)
+	(define (split x)
+		(string-tokenize x (char-set-complement (char-set (directory-separator)))))
+	(define (head? h l)
+		(if (pair? h)
+			(if (string=? (car h) (car l))
+				(head? (cdr h) (cdr l))
+				#f)
+			#t))
+	(let loop (
+			[parts (split path)]
+			[final '()])
+		(if (pair? parts)
+			(if (string=? ".." (car parts))
+				(loop (cdr parts) (if (null? final) '() (cdr final)))
+				(loop (cdr parts) (cons (car parts) final)))
+			(head? (split (root-dir)) (reverse final)))))
 
 (define goscher-not-found
   (lambda ()
