@@ -33,10 +33,10 @@ package: goscher.boot Makefile README INSTALL LICENSE
 	cp Makefile.install ${PKG}/Makefile
 	cp goscher.boot ${PKG}/
 	cp README ${PKG}/
-	cp INSTALL ${PKG/
-	cp LICENSE ${PKG/
-	mkdir ${PKG/conf
-	cp -R conf/extensions* ${PKG/conf/
+	cp INSTALL ${PKG}/
+	cp LICENSE ${PKG}/
+	mkdir ${PKG}/conf
+	cp -R conf/extensions* ${PKG}/conf/
 	cp -R conf/goscher.conf ${PKG}/conf/
 	tar cvzf ${PKG}.tar.gz ${PKG}
 
