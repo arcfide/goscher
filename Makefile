@@ -1,23 +1,12 @@
-MACHINE=ta6li
+MACHINE=ta6le
 VERSION=0.3
 INSTALLBIN=/usr/bin
 INSTALLLIB=/usr/lib/csv7.9.3/${MACHINE}/
+PKG=goscher-${VERSION}-${MACHINE}
 
-DEPS=../../srfi/private/include.chezscheme.sls \
-	../../srfi/private/let-opt.sls \
-	../../srfi/9/records.sls \
-	../../srfi/39/parameters.chezscheme.sls \
-	../../srfi/23/error.sls \
-	../../srfi/14/char-sets.sls \
-	../../srfi/14.sls \
-	../../srfi/8/receive.sls \
-	../../srfi/8.sls \
-	../../srfi/13/strings.sls \
-	../../srfi/13.sls \
-	../../arcfide/extended-definitions.sls \
-	../../riastradh/foof-loop/loop.sls \
-	../../riastradh/foof-loop/nested.sls \
-	../../riastradh/foof-loop.sls
+DEPS=../../srfi/private/include.chezscheme.sls ../../srfi/private/let-opt.sls ../../srfi/9/records.sls ../../srfi/39/parameters.chezscheme.sls ../../srfi/23/error.sls ../../srfi/14/char-sets.sls ../../srfi/14.sls ../../srfi/8/receive.sls ../../srfi/8.sls ../../srfi/13/strings.sls ../../srfi/13.sls ../../arcfide/extended-definitions.sls ../../riastradh/foof-loop/loop.sls ../../riastradh/foof-loop/nested.sls ../../riastradh/foof-loop.sls
+
+FILES=include.chezscheme.sls let-opt.sls records.sls parameters.chezscheme.sls error.sls  char-sets.sls 14.sls receive.sls 8.sls strings.sls 13.sls extended-definitions.sls loop.sls nested.sls foof-loop.sls
 
 goscher.boot: goscher.so goscher.hdr
 	cat goscher.hdr goscher.so > goscher.boot
@@ -26,7 +15,10 @@ goscher.hdr:
 	echo '(make-boot-header "goscher.hdr" "petite.boot")' | scheme -q
 
 goscher.so: ${DEPS} goscher.ss
-	./build.ss goscher.so ${DEPS} goscher.ss
+	rm -rf build
+	mkdir -p build
+	cp ${DEPS} goscher.ss build/
+	./build.ss goscher.so build/ ${FILES} goscher.ss
 
 install: goscher.boot
 	cp goscher.boot ${INSTALLLIB}
@@ -37,16 +29,16 @@ uninstall:
 	rm -rf ${INSTALLLIB}/goscher.boot
 
 package: goscher.boot Makefile README INSTALL LICENSE 
-	mkdir goscher-${VERSION}
-	cp Makefile.install goscher-${VERSION}/Makefile
-	cp goscher.boot goscher-${VERSION}/
-	cp README goscher-${VERSION}/
-	cp INSTALL goscher-${VERSION}/
-	cp LICENSE goscher-${VERSION}/
-	mkdir goscher-${VERSION}/conf
-	cp -R conf/extensions* goscher-${VERSION}/conf/
-	cp -R conf/goscher.conf goscher-${VERSION}/conf/
-	tar cvzf goscher-${VERSION}.tar.gz goscher-${VERSION}
+	mkdir ${PKG}
+	cp Makefile.install ${PKG}/Makefile
+	cp goscher.boot ${PKG}/
+	cp README ${PKG}/
+	cp INSTALL ${PKG/
+	cp LICENSE ${PKG/
+	mkdir ${PKG/conf
+	cp -R conf/extensions* ${PKG/conf/
+	cp -R conf/goscher.conf ${PKG}/conf/
+	tar cvzf ${PKG}.tar.gz ${PKG}
 
 source-package: 
 	rm -rf goscher-source-${VERSION}
@@ -58,3 +50,5 @@ source-package:
 clean: 
 	rm -rf goscher.so goscher.boot goscher.hdr
 	rm -rf goscher-${VERSION}*
+	rm -rf goscher-deps*
+	rm -rf goscher-source*

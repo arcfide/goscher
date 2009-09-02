@@ -1,22 +1,27 @@
 #! /usr/bin/scheme --program
 (import (chezscheme))
 
-(unless (pair? (command-line-arguments))
-	(printf "~a: <in> <out> <in> <out>  ...~%" (car (command-line)))
+(unless (and (pair? (command-line-arguments)) (pair? (cdr (command-line-arguments))))
+	(printf "~a: <final> <build_dir> <in>  ...~%" (car (command-line)))
 	(exit 1))
 
 (optimize-level 3)
 (generate-inspector-information #f)
 
-(let (
-		[op 
-			(open-file-output-port 
-				(car (command-line-arguments))
-				(file-options no-fail))])
-	(let loop ([files (cdr (command-line-arguments))])
-		(if (pair? files)
-			(begin 
-				(call-with-input-file (car files)
-					(lambda (ip) (compile-port ip op)))
-				(loop (cdr files)))
-			(close-port op))))
+(define final-out (car (command-line-arguments)))
+(define build-dir (cadr (command-line-arguments)))
+
+(define (build-files files)
+	(if (pair? files)
+		(let ([outfile (string-append  build-dir (path-last (path-root (car files))) ".so")])
+			(compile-file (string-append build-dir (car files)) outfile)
+			(cons outfile (build-files (cdr files))))
+		'()))
+
+(let* (
+		[out-files (build-files (cddr (command-line-arguments)))]
+		[cmd (format "cat ~{'~a'~^ ~} > '~a'" out-files final-out)])
+	(printf "~a~%" cmd)
+	(system cmd))
+
+(printf "~%Done!~%")

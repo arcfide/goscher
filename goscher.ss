@@ -37,10 +37,6 @@
 ;;;	WITH-OUTPUT-TO-FILE
 ;;;	REMP
 
-(eval-when (compile) 
-  (generate-inspector-information #f)
-  (optimize-level 3))
-
 (module (start-proc)
 	(import (chezscheme)
 		(only (srfi :13) string-tokenize string-null? string-prefix?)
@@ -333,8 +329,8 @@
 	(define (grab x p)
 		(let ([res (assq x (settings))])
 			(or res (p))))
-	(if (pair? (cdr fns))
-		(load-settings (cadr fns))
+	(if (pair? fns)
+		(load-settings (car fns))
 		(load-settings))
 	(load-extensions)
 	(parameterize (
