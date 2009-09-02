@@ -34,7 +34,7 @@ You should add an entry into your inetd.conf file, and remember to pass
 
 A sample inetd.conf entry might be:
 
-127.0.0.1:gopher	stream	tcp	nowait	root	/usr/local/bin/goscher goscher
+127.0.0.1:gopher	stream	tcp	nowait	root	/usr/local/bin/goscher goscher -q
 
 CONFIGURATION
 -------------

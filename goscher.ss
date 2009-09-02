@@ -126,19 +126,18 @@
         (values #f #f)
         (let ([req (split-request-string s)])
           (cond 
-            [(string-null? (car req)) 
+            [(or (null? req) (string-null? (car req)))
              (values (root-dir) (gopher+? req))]
             [else 
              (values (directory+file #t "" (car req))
                (gopher+? req))]))))))
 
-(define split-request-string 
-  (lambda (str)
-    (string-split #\tab str)))
+(define (split-request-string str)
+	(string-tokenize str (char-set-complement (char-set #\tab))))
 
 (define gopher+?
   (lambda (request)
-    (and (not (null? (cdr request))) 
+    (and (not (null? request)) (not (null? (cdr request))) 
          (char=? #\$ (string-ref (cadr request) 0)))))
 
 (define goscher-directory
@@ -308,7 +307,7 @@
 (define (start-proc . fns)
 	(define (grab x p)
 		(let ([res (assq x (settings))])
-			(or res (p))))
+			(if res (cdr res) (p))))
 	(if (pair? fns)
 		(load-settings (car fns))
 		(load-settings))
