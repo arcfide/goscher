@@ -236,10 +236,9 @@
         (if (char=? #\. (string-ref name 0))
           0
           (let ([ext (path-extension name)])
-            (if ext 
-                (let ([res (assoc (path-extension name) (extension-types))])
-                  (if res (cdr res) 9))
-                0)))))))
+            (if (string-null? ext) 0
+                (let ([res (assoc ext (extension-types))])
+                  (if res (cdr res) 9)))))))))
 
 (define entry-user-name
   (lambda (name db)
