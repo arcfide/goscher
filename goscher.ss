@@ -279,9 +279,15 @@
     (print-lastline)))
 
 (define goscher-stream
-  (lambda (file)
-    (iterate! (for char (in-file file))
-      (display char))))
+	(lambda (file)
+		(let (
+				[ip (open-file-input-port file)]
+				[op (standard-output-port)])
+			(let ([bytes (get-bytevector-all ip)])
+				(unless (eof-object? bytes)
+					(put-bytevector op bytes))
+				(close-port op)
+				(close-port ip)))))
 
 (define directory+file
   (lambda (root? dir file)
