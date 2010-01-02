@@ -1,4 +1,4 @@
-MACHINE=ta6li
+MACHINE=ta6le
 INSTALLBIN=/usr/bin
 INSTALLLIB=/usr/lib/csv7.9.3/${MACHINE}/
 

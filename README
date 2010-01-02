@@ -29,26 +29,31 @@ See the INSTALL file.
 RUNNING
 -------
 
-You should add an entry into your inetd.conf file, and remember to pass 
--q as one of the arguments to the goscher server.
+Simply make sure that you run goscher as follows:
 
-A sample inetd.conf entry might be:
+goscher [options] [config-file]
 
-127.0.0.1:gopher	stream	tcp	nowait	root	/usr/local/bin/goscher goscher -q
+Options:
+
+  -q  This will make goscher work in quiet mode.
+  
+The config-file can be left out and the default will be used, or you can
+specify a particular configuration file.
 
 CONFIGURATION
 -------------
 
 First make sure that /etc/goscher/goscher.conf matches the example, 
-and that the host name is correct.
+and that the host name is correct, or specify a different path to the
+configuration file in the command line.
 
 Goscher currently expects to find its data directory in /var/goscher 
-and its configuration in /etc/goscher. This will become configurable in 
-the future. Right now the only supported goscher configuration files 
-are extensions.X files which specify the extensions that map to file 
-types. Each extensions file maps a list of extensions to the file type 
-'X' which is the last part of the file name, and should be only one 
-letter or digit. The extensions are listed one extension per line.
+and its configuration in /etc/goscher. You can change this by editing
+the configuration file. Right now the only supported goscher support
+files are extensions.X files which specify the extensions that map to
+file types. Each extensions file maps a list of extensions to the file
+type 'X' which is the last part of the file name, and should be only
+one letter or digit. The extensions are listed one extension per line.
 
 In every directory of the data directory, there can be a +INDEX file, 
 which specifies the properties associated with every file in that 
@@ -65,6 +70,13 @@ The currently supported properties are:
 It is possible to tweak the configuration and location of the files, 
 but if you change the location of goscher.conf, you must pass this 
 file explicitly to the goscher program on launch as the first argument.
+
+LOG FILE
+--------
+
+You must provide a log file in the configuration file, or Goscher will
+use the default. At the moment there is no support for not having a log
+file.
 
 SPECIAL FILES
 -------------

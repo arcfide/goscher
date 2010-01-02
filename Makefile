@@ -15,7 +15,7 @@ uninstall:
 	rm -rf ${INSTALLBIN}/goscher
 	rm -rf ${INSTALLLIB}/goscher.boot
 
-package: goscher.boot Makefile README INSTALL LICENSE 
+package: goscher.boot Makefile.install README INSTALL LICENSE 
 	mkdir ${PKG}
 	cp Makefile.install ${PKG}/Makefile
 	cp goscher.boot ${PKG}/
