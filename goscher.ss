@@ -1,7 +1,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; Goscher: Scheme Gopher Server
 ;;; 
-;;; Copyright (c) 2009 Aaron Hsu <arcfide@sacrideo.us>
+;;; Copyright (c) 2010 Aaron Hsu <arcfide@sacrideo.us>
 ;;; 
 ;;; Permission to use, copy, modify, and distribute this software for
 ;;; any purpose with or without fee is hereby granted, provided that the
@@ -18,45 +18,53 @@
 ;;; PERFORMANCE OF THIS SOFTWARE.
 
 ;;; Dependencies:
-;;;	SRFI 13
-;;; 		STRING-TOKENIZE 
-;;;		STRING-NULL? 
-;;;		STRING-PREFIX?
-;;; 	SRFI 14
-;;;		CHAR-SET 
-;;;		CHAR-SET-COMPLEMENT
-;;;	DIRECTORY-SEPARATOR
-;;;	FOOF-LOOP
-;;;	NESTED-FOOF-LOOP
-;;;	FILE-DIRECTORY?
-;;;	FILE-REGULAR?
-;;;	READ-LINE (Arcfide-Misc)
-;;;	FORMAT 
-;;;	MAKE-PARAMETER
-;;;	LET-VALUES
-;;;	WITH-OUTPUT-TO-FILE
-;;;	REMP
+;;;  SRFI 13
+;;;     STRING-TOKENIZE 
+;;;    STRING-NULL? 
+;;;    STRING-PREFIX?
+;;;   SRFI 14
+;;;    CHAR-SET 
+;;;    CHAR-SET-COMPLEMENT
+;;;  DIRECTORY-SEPARATOR
+;;;  FOOF-LOOP
+;;;  NESTED-FOOF-LOOP
+;;;  FILE-DIRECTORY?
+;;;  FILE-REGULAR?
+;;;  READ-LINE (Arcfide-Misc)
+;;;  FORMAT 
+;;;  MAKE-PARAMETER
+;;;  LET-VALUES
+;;;  WITH-OUTPUT-TO-FILE
+;;;  REMP
+
+(load-shared-object "libc.so.6")
 
 (module (start-proc)
-	(import (chezscheme)
-		(only (srfi :13) string-tokenize string-null? string-prefix?)
-		(only (srfi :14) char-set char-set-complement)
-		(riastradh foof-loop))
+  (import (chezscheme)
+    (only (srfi :13) string-tokenize string-null? string-prefix?)
+    (only (srfi :14) char-set char-set-complement)
+    (riastradh foof-loop)
+    (arcfide sockets)
+    (arcfide sockets socket-ports))
 
 (define special-files
   '("+INDEX"))
 
-(define gopher-entry-format "~a~a	~a	~a	~d")
+(define gopher-entry-format "~a~a\t~a\t~a\t~d")
 
 (define conf-dir
-	(make-parameter "/etc/goscher/"
-		(lambda (x) (unless (string? x) (error 'conf-dir "Invalid conf-dir value" x)) x)))
+  (make-parameter "/etc/goscher/"
+    (lambda (x) (unless (string? x) (error 'conf-dir "Invalid conf-dir value" x)) x)))
 (define root-dir
-	(make-parameter "/var/goscher/"
-		(lambda (x) (unless (string? x) (error 'root-dir "Invalid root-dir value" x)) x)))
+  (make-parameter "/var/goscher/"
+    (lambda (x) (unless (string? x) (error 'root-dir "Invalid root-dir value" x)) x)))
+(define log-file-default "/var/log/goscher")
 (define log-file
-	(make-parameter "/var/log/goscher"
-		(lambda (x) (unless (string? x) (error 'log-file "Invalid log-file value" x)) x)))
+  (make-parameter #f
+    (lambda (x) 
+      (unless (or (not x) (and (port? x) (textual-port? x)))
+        (error 'log-file "Invalid log-file value" x))
+      x)))
 
 (define extension-types
   (make-parameter '()
@@ -82,76 +90,94 @@
     (let ([res (assq 'port (settings))])
       (if res (cdr res) (error 'goscher-port "No port defined.")))))
 
-(define run-goscher
-  (lambda ()
-    (let-values ([(path plus?) (get-request)])
+(define (run-goscher)
+  (define (loop)
+    (let-values ([(sock addr) (accept-socket (s))])
+      (fork-thread (delay (handle-request sock addr))))
+    (loop))
+  (define s (make-parameter #f))
+  (define a (make-parameter #f))
+  (define (start-up)
+    (s (create-socket socket-domain/internet 
+                      socket-type/stream 
+                      socket-protocol/auto))
+    (set-socket-nonblocking! (s) #f)
+    (a (string->internet-address (format "127.0.0.1:~d"
+                                         (goscher-port))))
+    (bind-socket (s) (a))
+    (listen-socket (s) (socket-maximum-connections)))
+  (define (clean-up) (close-socket (s)))
+  (dynamic-wind start-up loop clean-up))
+
+(define (handle-request sock addr)
+  (define trans (make-transcoder (latin-1-codec) (eol-style crlf)))
+  (let-values ([(ip op) 
+                (socket->port sock (buffer-mode block) trans)])
+    (let-values ([(path plus?) (get-request ip addr)])
       (when (good-path? path)
         (cond
-          [plus? (plus-kludge path)]
+          [plus? (plus-kludge op path)]
           [(file-directory? path) 
-           (goscher-directory path)]
+           (goscher-directory op path)]
           [(file-regular? path) 
-           (goscher-file path)]
+           (goscher-file op path)]
           [else 
-            (goscher-not-found)])))))
+            (goscher-not-found op)])))
+    (close-port op)))
 
 (define (good-path? path)
-	(define (split x)
-		(string-tokenize x (char-set-complement (char-set (directory-separator)))))
-	(define (head? h l)
-		(if (pair? h)
-			(if (string=? (car h) (car l))
-				(head? (cdr h) (cdr l))
-				#f)
-			#t))
-	(let loop (
-			[parts (split path)]
-			[final '()])
-		(if (pair? parts)
-			(if (string=? ".." (car parts))
-				(loop (cdr parts) (if (null? final) '() (cdr final)))
-				(loop (cdr parts) (cons (car parts) final)))
-			(head? (split (root-dir)) (reverse final)))))
+  (define (split x)
+    (string-tokenize x (char-set-complement (char-set (directory-separator)))))
+  (define (head? h l)
+    (if (pair? h)
+      (if (string=? (car h) (car l))
+        (head? (cdr h) (cdr l))
+        #f)
+      #t))
+  (let loop (
+      [parts (split path)]
+      [final '()])
+    (if (pair? parts)
+      (if (string=? ".." (car parts))
+        (loop (cdr parts) (if (null? final) '() (cdr final)))
+        (loop (cdr parts) (cons (car parts) final)))
+      (head? (split (root-dir)) (reverse final)))))
 
-(define goscher-not-found
-  (lambda ()
-    (display "3Error! Please contact Administrator.		")
-    (display (goscher-host))
-    (display #\tab)
-    (display (goscher-port))
-    (print-crlf)))
+(define (goscher-not-found op)
+  (put-string op "3Error! Please contact Administrator.\t\t")
+  (put-string op (goscher-host))
+  (put-char op #\tab)
+  (put-datum op (goscher-port))
+  (put-string op "\n"))
 
-(define plus-kludge
-  (lambda (path)
-    (display "+-1") (print-crlf)
-    (format #t "+INFO: 1Main menu (non-gopher+)		~a	~d"
-      (goscher-host) (goscher-port))
-    (print-crlf)
-    (print-lastline)))
+(define (plus-kludge op path)
+  (put-string op "+-1\n")
+  (format op "+INFO: 1Main menu (non-gopher+)\t\t~a\t~d\n"
+    (goscher-host) (goscher-port))
+  (print-lastline op))
 
 (define goscher-log
-  (lambda data 
-    (with-output-to-file (log-file)
-      (lambda () 
-        (for-each write data)
-        (newline))
-      'append)))
+  (let ([m (make-mutex)])
+    (lambda data 
+      (when (log-file) 
+        (with-mutex m
+          (format (log-file) "~{~s\n~}" data))))))
 
-(define get-request
-  (lambda ()
-    (let ([s (get-line (current-input-port))])
-      (if (eof-object? s)
-        (values #f #f)
-        (let ([req (split-request-string s)])
-          (cond 
-            [(or (null? req) (string-null? (car req)))
-             (values (root-dir) (gopher+? req))]
-            [else 
-             (values (directory+file #t "" (car req))
-               (gopher+? req))]))))))
+(define (get-request ip addr)
+  (let ([s (get-line ip)])
+    (goscher-log `(received ,s from ,(internet-address->string addr)))
+    (if (eof-object? s)
+      (values #f #f)
+      (let ([req (split-request-string s)])
+        (cond 
+          [(or (null? req) (string-null? (car req)))
+           (values (root-dir) (gopher+? req))]
+          [else 
+           (values (directory+file #t "" (car req))
+             (gopher+? req))])))))
 
 (define (split-request-string str)
-	(string-tokenize str (char-set-complement (char-set #\tab))))
+  (string-tokenize str (char-set-complement (char-set #\tab))))
 
 (define gopher+?
   (lambda (request)
@@ -159,11 +185,11 @@
          (char=? #\$ (string-ref (cadr request) 0)))))
 
 (define goscher-directory
-  (lambda (dir)
+  (lambda (op dir)
     (let ([db (goscher-index dir)])
       (iterate! (for entry rest (in-list (get-file-list dir)))
-        (print-directory-entry entry (selector-path dir) db)))
-    (print-lastline)))
+        (print-directory-entry op entry (selector-path dir) db)))
+    (print-lastline op)))
 
 (define get-file-list
   (lambda (dir)
@@ -184,31 +210,31 @@
         dir)))
 
 (define print-directory-entry 
-  (lambda (entry dir db)
+  (lambda (op entry dir db)
     (cond 
-      [(gopher-link? entry) (print-gopher-link entry dir db)]
+      [(gopher-link? entry) (print-gopher-link op entry dir db)]
       [else 
-        (format #t gopher-entry-format
+        (format op gopher-entry-format
           (entry-type entry dir db)
           (entry-user-name entry db)
           (entry-selector entry dir)
           (entry-host entry dir)
           (entry-port entry dir))])
-    (print-crlf)))
+    (put-string op "\n")))
 
 (define gopher-link?
   (lambda (name) 
     (char=? #\@ (string-ref name (1- (string-length name))))))
 
 (define print-gopher-link
-  (lambda (entry dir db)
+  (lambda (op entry dir db)
     (let ([attribs (call-with-input-file (directory+file #t dir entry) read)])
-      (format #t gopher-entry-format
+      (format op gopher-entry-format
         (get-attribute attribs 'type (lookup-filetype entry db))
-	(get-attribute attribs 'name entry)
-	(get-attribute attribs 'selector entry)
-	(get-attribute attribs 'server (goscher-host))
-	(get-attribute attribs 'port (goscher-port))))))
+  (get-attribute attribs 'name entry)
+  (get-attribute attribs 'selector entry)
+  (get-attribute attribs 'server (goscher-host))
+  (get-attribute attribs 'port (goscher-port))))))
 
 (define get-attribute
   (case-lambda 
@@ -216,11 +242,6 @@
     [(db key default)
      (let ([val (assq key db)])
        (if val (cdr val) default))])) 
-
-(define print-crlf
-  (lambda ()
-    (display #\return)
-    (display #\newline)))
 
 (define entry-type
   (lambda (entry dir db)
@@ -260,34 +281,32 @@
   (lambda (entry dir)
     (goscher-port)))
 
-(define print-lastline
-  (lambda ()
-    (display #\.)
-    (print-crlf)))
+(define (print-lastline op)
+  (put-string op ".\n"))
 
-(define goscher-file
-  (lambda (file)
-    (let ([db (goscher-index (path-parent file))])
-      (case (lookup-filetype (path-last file) db)
-        [(0 4 6 I g) (goscher-document file)]
-        [(5 9) (goscher-stream file)]
-        [else (goscher-not-found)]))))
+(define (goscher-file op file)
+  (let ([db (goscher-index (path-parent file))])
+    (case (lookup-filetype (path-last file) db)
+      [(0 4 6 I g) (goscher-document op file)]
+      [(5 9) (goscher-stream op file)]
+      [else (goscher-not-found op)])))
 
-(define goscher-document
-  (lambda (file)
-    (goscher-stream file)
-    (print-lastline)))
+(define (goscher-document op file)
+  (goscher-stream op file)
+  (print-lastline op))
 
-(define goscher-stream
-	(lambda (file)
-		(let (
-				[ip (open-file-input-port file)]
-				[op (standard-output-port)])
-			(let ([bytes (get-bytevector-all ip)])
-				(unless (eof-object? bytes)
-					(put-bytevector op bytes))
-				(close-port op)
-				(close-port ip)))))
+(define (goscher-stream op file)
+  (define trans (make-transcoder (latin-1-codec) (eol-style none)))
+  (let ([ip (open-file-input-port file 
+                                  (file-options) 
+                                  (buffer-mode block)
+                                  trans)])
+    (let loop ()
+      (let ([c (get-char ip)])
+        (if (eof-object? c)
+            (close-port ip)
+            (begin (put-char op c)
+                   (loop)))))))
 
 (define directory+file
   (lambda (root? dir file)
@@ -318,28 +337,34 @@
         (cons elem type)))))
 
 (define (load-settings . maybe-file) 
-	(let (
-			[settings-path 
-				(if (pair? maybe-file) 
-					(car maybe-file)
-					(string-append (conf-dir) "goscher.conf"))])
-		(unless (file-exists? settings-path)
-			(error 'load-settings "Could not find goscher.conf"))
-		(settings (call-with-input-file settings-path read))))
+  (define (grab x p)
+    (let ([res (assq x (settings))])
+      (if res (cdr res) (p))))
+  (let (
+      [settings-path 
+        (if (pair? maybe-file) 
+          (car maybe-file)
+          (string-append (conf-dir) "goscher.conf"))])
+    (unless (file-exists? settings-path)
+      (error 'load-settings "Could not find goscher.conf"))
+    (settings (call-with-input-file settings-path read))
+    (conf-dir (grab 'conf-dir conf-dir))
+    (root-dir (grab 'root-dir root-dir))
+    (log-file (open-log-file (grab 'log-file log-file-default)))))
+
+(define (open-log-file fname)
+  (open-file-output-port
+    fname
+    (file-options append no-truncate no-fail)
+    (buffer-mode line)
+    (native-transcoder)))
 
 (define (start-proc . fns)
-	(define (grab x p)
-		(let ([res (assq x (settings))])
-			(if res (cdr res) (p))))
-	(if (pair? fns)
-		(load-settings (car fns))
-		(load-settings))
-	(load-extensions)
-	(parameterize (
-			[conf-dir (grab 'conf-dir conf-dir)]
-			[root-dir (grab 'root-dir root-dir)]
-			[log-file (grab 'log-file log-file)])
-		(run-goscher)))
+  (if (pair? fns)
+    (load-settings (car fns))
+    (load-settings))
+  (load-extensions)
+  (run-goscher))
 
 )
 

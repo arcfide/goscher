@@ -1,27 +1,35 @@
 #! /usr/bin/scheme --program
-(import (chezscheme))
-
-(unless (and (pair? (command-line-arguments)) (pair? (cdr (command-line-arguments))))
-	(printf "~a: <final> <build_dir> <in>  ...~%" (car (command-line)))
-	(exit 1))
+(import (chezscheme) (arcfide building))
 
 (optimize-level 3)
 (generate-inspector-information #f)
+(source-directories
+  (cons "/home/arcfide/code/arcfide/sockets"
+        (source-directories)))
 
-(define final-out (car (command-line-arguments)))
-(define build-dir (cadr (command-line-arguments)))
-
-(define (build-files files)
-	(if (pair? files)
-		(let ([outfile (string-append  build-dir (path-last (path-root (car files))) ".so")])
-			(compile-file (string-append build-dir (car files)) outfile)
-			(cons outfile (build-files (cdr files))))
-		'()))
-
-(let* (
-		[out-files (build-files (cddr (command-line-arguments)))]
-		[cmd (format "cat ~{'~a'~^ ~} > '~a'" out-files final-out)])
-	(printf "~a~%" cmd)
-	(system cmd))
-
-(printf "~%Done!~%")
+(define files
+  (map resolve-library-path
+    '((srfi private include)
+      (srfi private let-opt)
+      (srfi :9 records)
+      (srfi :39 parameters)
+      (srfi :23 error)
+      (srfi :14 char-sets)
+      (srfi :14)
+      (srfi :8 receive)
+      (srfi :8)
+      (srfi :13 strings)
+      (srfi :13)
+      (arcfide extended-definitions)
+      (riastradh foof-loop loop)
+      (riastradh foof-loop nested)
+      (riastradh foof-loop)
+      (arcfide ffi-bind)
+      (arcfide errno)
+      (arcfide sockets compat)
+      (arcfide sockets)
+      (arcfide sockets socket-ports)
+      "goscher")))
+      
+(apply make-boot-file 
+  `("goscher.boot" ("petite") ,@files))

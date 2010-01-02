@@ -1,24 +1,11 @@
 MACHINE=ta6le
-VERSION=0.3.2
+VERSION=0.4.0
 INSTALLBIN=/usr/bin
 INSTALLLIB=/usr/lib/csv7.9.3/${MACHINE}/
 PKG=goscher-${VERSION}-${MACHINE}
 
-DEPS=../../srfi/private/include.chezscheme.sls ../../srfi/private/let-opt.sls ../../srfi/9/records.sls ../../srfi/39/parameters.chezscheme.sls ../../srfi/23/error.sls ../../srfi/14/char-sets.sls ../../srfi/14.sls ../../srfi/8/receive.sls ../../srfi/8.sls ../../srfi/13/strings.sls ../../srfi/13.sls ../../arcfide/extended-definitions.sls ../../riastradh/foof-loop/loop.sls ../../riastradh/foof-loop/nested.sls ../../riastradh/foof-loop.sls
-
-FILES=include.chezscheme.sls let-opt.sls records.sls parameters.chezscheme.sls error.sls  char-sets.sls 14.sls receive.sls 8.sls strings.sls 13.sls extended-definitions.sls loop.sls nested.sls foof-loop.sls
-
-goscher.boot: goscher.so goscher.hdr
-	cat goscher.hdr goscher.so > goscher.boot
-
-goscher.hdr: 
-	echo '(make-boot-header "goscher.hdr" "petite.boot")' | scheme -q
-
-goscher.so: ${DEPS} goscher.ss
-	rm -rf build
-	mkdir -p build
-	cp ${DEPS} goscher.ss build/
-	./build.ss goscher.so build/ ${FILES} goscher.ss
+goscher.boot: 
+	./build.ss
 
 install: goscher.boot
 	cp goscher.boot ${INSTALLLIB}
@@ -48,7 +35,6 @@ source-package:
 	tar cvzf goscher-source-${VERSION}.tar.gz goscher-source-${VERSION}
 
 clean: 
-	rm -rf goscher.so goscher.boot goscher.hdr
+	rm -rf goscher.boot 
 	rm -rf goscher-${VERSION}*
-	rm -rf build
 	rm -rf goscher-source*

@@ -1,0 +1,5 @@
+((host . "localhost")
+ (port . 70)
+ (conf-dir . "./conf/")
+ (root-dir . "./data/")
+ (log-file . "./goscher.log"))
