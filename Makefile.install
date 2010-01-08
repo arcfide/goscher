@@ -1,6 +1,6 @@
 MACHINE=ta6le
 INSTALLBIN=/usr/bin
-INSTALLLIB=/usr/lib/csv7.9.3/${MACHINE}/
+INSTALLLIB=/usr/lib/csv7.9.4/${MACHINE}/
 
 install: goscher.boot
 	cp goscher.boot ${INSTALLLIB}

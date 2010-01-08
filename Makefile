@@ -1,7 +1,7 @@
 MACHINE=ta6le
 VERSION=0.4.0
 INSTALLBIN=/usr/bin
-INSTALLLIB=/usr/lib/csv7.9.3/${MACHINE}/
+INSTALLLIB=/usr/lib/csv7.9.4/${MACHINE}/
 PKG=goscher-${VERSION}-${MACHINE}
 
 goscher.boot: 
@@ -16,6 +16,7 @@ uninstall:
 	rm -rf ${INSTALLLIB}/goscher.boot
 
 package: goscher.boot Makefile.install README INSTALL LICENSE 
+	rm -rf ${PKG}
 	mkdir ${PKG}
 	cp Makefile.install ${PKG}/Makefile
 	cp goscher.boot ${PKG}/
