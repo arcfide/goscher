@@ -296,13 +296,13 @@
 (define (goscher-file op/binary op/text file)
   (let ([db (goscher-index (path-parent file))])
     (case (lookup-filetype (path-last file) db)
-      [(0 4 6 I g) (goscher-document op/binary file)]
+      [(0 4 6 I g) (goscher-document op/binary op/text file)]
       [(5 9) (goscher-stream op/binary file)]
       [else (goscher-not-found op/text)])))
 
-(define (goscher-document op file)
-  (goscher-stream op file)
-  (print-lastline op))
+(define (goscher-document opb opt file)
+  (goscher-stream opb file)
+  (print-lastline opt))
 
 (define (goscher-stream op file)
   (let ([ip (open-file-input-port file)])
