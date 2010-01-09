@@ -108,22 +108,31 @@
     (listen-socket (s) (socket-maximum-connections)))
   (define (clean-up) (close-socket (s)))
   (dynamic-wind start-up loop clean-up))
+  
+(define latin-1-transcoder/crlf
+  (make-transcoder (latin-1-codec) (eol-style crlf)))
 
 (define (handle-request sock addr)
-  (define trans (make-transcoder (latin-1-codec) (eol-style crlf)))
-  (let-values ([(ip op) 
-                (socket->port sock (buffer-mode block) trans)])
+  (let ([ip (socket->input-port sock 
+                                (buffer-mode block)
+                                latin-1-transcoder/crlf)]
+        [op/binary (socket->output-port sock (buffer-mode block))]
+        [op/text (socket->output-port sock 
+                                      (buffer-mode block) 
+                                      latin-1-transcoder/crlf)])
     (let-values ([(path plus?) (get-request ip addr)])
       (when (good-path? path)
         (cond
-          [plus? (plus-kludge op path)]
+          [plus? (plus-kludge op/text path)]
           [(file-directory? path) 
-           (goscher-directory op path)]
+           (goscher-directory op/text path)]
           [(file-regular? path) 
-           (goscher-file op path)]
+           (goscher-file op/binary op/text path)]
           [else 
-            (goscher-not-found op)])))
-    (close-port op)))
+            (goscher-not-found op/text)])))
+    (flush-output-port op/text)
+    (flush-output-port op/binary)
+    (close-port op/binary)))
 
 (define (good-path? path)
   (define (split x)
@@ -284,28 +293,24 @@
 (define (print-lastline op)
   (put-string op ".\n"))
 
-(define (goscher-file op file)
+(define (goscher-file op/binary op/text file)
   (let ([db (goscher-index (path-parent file))])
     (case (lookup-filetype (path-last file) db)
-      [(0 4 6 I g) (goscher-document op file)]
-      [(5 9) (goscher-stream op file)]
-      [else (goscher-not-found op)])))
+      [(0 4 6 I g) (goscher-document op/binary file)]
+      [(5 9) (goscher-stream op/binary file)]
+      [else (goscher-not-found op/text)])))
 
 (define (goscher-document op file)
   (goscher-stream op file)
   (print-lastline op))
 
 (define (goscher-stream op file)
-  (define trans (make-transcoder (latin-1-codec) (eol-style none)))
-  (let ([ip (open-file-input-port file 
-                                  (file-options) 
-                                  (buffer-mode block)
-                                  trans)])
+  (let ([ip (open-file-input-port file)])
     (let loop ()
-      (let ([c (get-char ip)])
+      (let ([c (get-u8 ip)])
         (if (eof-object? c)
             (close-port ip)
-            (begin (put-char op c)
+            (begin (put-u8 op c)
                    (loop)))))))
 
 (define directory+file
