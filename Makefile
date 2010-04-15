@@ -1,5 +1,5 @@
 MACHINE=ta6le
-VERSION=0.4.2
+VERSION=0.4.3
 INSTALLBIN=/usr/bin
 INSTALLLIB=/usr/lib/csv8.0/${MACHINE}/
 PKG=goscher-${VERSION}-${MACHINE}
