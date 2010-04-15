@@ -1,7 +1,7 @@
 MACHINE=ta6le
 VERSION=0.4.2
 INSTALLBIN=/usr/bin
-INSTALLLIB=/usr/lib/csv7.9.4/${MACHINE}/
+INSTALLLIB=/usr/lib/csv8.0/${MACHINE}/
 PKG=goscher-${VERSION}-${MACHINE}
 
 goscher.boot: 

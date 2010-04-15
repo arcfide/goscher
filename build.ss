@@ -1,6 +1,8 @@
 #! /usr/bin/scheme --program
 (import (chezscheme) (arcfide building))
 
+(load-shared-object "sockets.so.1")
+
 (optimize-level 3)
 (generate-inspector-information #f)
 (source-directories

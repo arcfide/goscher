@@ -38,6 +38,7 @@
 ;;;  REMP
 
 (load-shared-object "libc.so.6")
+(load-shared-object "sockets.so.1")
 
 (module (start-proc)
   (import (chezscheme)
