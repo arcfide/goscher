@@ -38,7 +38,7 @@
 ;;;  REMP
 
 (load-shared-object "libc.so.6")
-(load-shared-object "sockets.so.1")
+(load-shared-object "chez_sockets.so.1")
 
 (module (start-proc)
   (import (chezscheme)
@@ -201,8 +201,8 @@
         (print-directory-entry op entry (selector-path dir) db)))
     (print-lastline op)))
 
-(define get-file-list
-  (lambda (dir)
+(define (get-file-list dir)
+  (list-sort string<?
     (remp (lambda (e) (member e special-files))
       (directory-list dir))))
 
