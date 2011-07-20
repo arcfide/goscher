@@ -4,7 +4,7 @@ INSTALLBIN=/usr/bin
 INSTALLLIB=/usr/lib/csv8.0/${MACHINE}/
 PKG=goscher-${VERSION}-${MACHINE}
 
-goscher.boot: 
+goscher.boot: goscher.ss
 	./build.ss
 
 install: goscher.boot

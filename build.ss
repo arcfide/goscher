@@ -10,11 +10,12 @@
   (format "~a/~a" lib-dir path))
 
 (load-shared-object "chez_sockets.so.1")
+(load-shared-object "chez_errno.so.1")
 (source-directories 
-  (cons (lib "arcfide/sockets") (source-directories)))
+  (cons* "." (lib "arcfide/chezweb") (lib "arcfide/sockets") (source-directories)))
 
 (make-boot-file "goscher.boot" '("petite")
-  (lib "arcfide/chezweb/cheztangle.ss")
+  (lib "arcfide/chezweb/tangle.ss")
   (lib "srfi/private/include.chezscheme.sls")
   (lib "srfi/private/let-opt.sls")
   (lib "srfi/9/records.sls")
@@ -34,6 +35,6 @@
   (lib "arcfide/errno.sls")
   (lib "arcfide/sockets/compat.chezscheme.sls")
   (lib "arcfide/sockets.sls")
-  (lib "arcfide/sockets/socket-ports.chezscheme.w")
+  (lib "arcfide/sockets/socket-ports.w")
   "goscher.ss")
 
