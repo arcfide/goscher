@@ -11,8 +11,9 @@ OVERVIEW
 --------
 
 Goscher is a lean Scheme Gopher server currently designed to be run 
-under inetd. It only supports basic functionality at the moment, but 
-hopefully that will change.
+under inetd or as a standalone server. 
+It supports a clean, minimal set of features for hosting Gopher
+repositories.
 
 FEATURES
 --------
